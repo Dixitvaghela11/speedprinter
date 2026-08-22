@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 0.85rem;
+  --background: #eef3f8;
+  --foreground: #17324d;
+  --card: #ffffff;
+  --card-foreground: #17324d;
+  --popover: #ffffff;
+  --popover-foreground: #17324d;
+  --primary: #1e3a5f;
+  --primary-foreground: #f7fbfe;
+  --secondary: #dce8f2;
+  --secondary-foreground: #1e3a5f;
+  --muted: #e7eef5;
+  --muted-foreground: #5b7388;
+  --accent: #d7e6f2;
+  --accent-foreground: #1e3a5f;
+  --destructive: #b42318;
+  --border: #d3e0eb;
+  --input: #d3e0eb;
+  --ring: #2a6f97;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    min-height: 100svh;
+    width: 100%;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    margin: 0;
+    font-family:
+      "Segoe UI",
+      system-ui,
+      -apple-system,
+      sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px;
+  }
+}
