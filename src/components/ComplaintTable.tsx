@@ -37,6 +37,20 @@ function statusVariant(status: ComplaintStatus) {
   return "secondary" as const
 }
 
+function formatCost(value: number | null) {
+  if (value == null) return "—"
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "—"
+  return format(new Date(value), "dd MMM yyyy, hh:mm a")
+}
+
 export function ComplaintTable({
   complaints,
   loading,
@@ -51,7 +65,7 @@ export function ComplaintTable({
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -61,8 +75,11 @@ export function ComplaintTable({
               <TableHead>Party Name</TableHead>
               <TableHead>Phone No</TableHead>
               <TableHead>Problem</TableHead>
+              <TableHead>Printer Parts</TableHead>
+              <TableHead>Est. Cost</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created At</TableHead>
+              <TableHead>Completed At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -76,7 +93,9 @@ export function ComplaintTable({
                 <TableCell>{complaint.serial_no || "—"}</TableCell>
                 <TableCell>{complaint.party_name || "—"}</TableCell>
                 <TableCell>{complaint.phone_no || "—"}</TableCell>
-                <TableCell className="max-w-56 truncate">{complaint.problem || "—"}</TableCell>
+                <TableCell className="max-w-48 truncate">{complaint.problem || "—"}</TableCell>
+                <TableCell className="max-w-48 truncate">{complaint.printer_parts || "—"}</TableCell>
+                <TableCell>{formatCost(complaint.estimated_cost)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -100,9 +119,8 @@ export function ComplaintTable({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-                <TableCell>
-                  {format(new Date(complaint.created_at), "dd MMM yyyy, hh:mm a")}
-                </TableCell>
+                <TableCell>{formatDateTime(complaint.created_at)}</TableCell>
+                <TableCell>{formatDateTime(complaint.completed_at)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="ghost" onClick={() => onView(complaint)}>
@@ -127,7 +145,7 @@ export function ComplaintTable({
         </Table>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         {complaints.map((complaint) => (
           <article
             key={complaint.id}
@@ -150,10 +168,24 @@ export function ComplaintTable({
               <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-foreground/80">
                 {complaint.problem || "No problem description"}
               </p>
+              {complaint.printer_parts && (
+                <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                  Parts: {complaint.printer_parts}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                <span>{complaint.serial_no || "No serial"}</span>
+                <span>·</span>
+                <span>{formatCost(complaint.estimated_cost)}</span>
+              </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {complaint.serial_no || "No serial"} ·{" "}
-                {format(new Date(complaint.created_at), "dd MMM yyyy")}
+                Created {formatDateTime(complaint.created_at)}
               </p>
+              {complaint.completed_at && (
+                <p className="mt-1 text-xs font-medium text-emerald-700">
+                  Completed {formatDateTime(complaint.completed_at)}
+                </p>
+              )}
             </button>
             <div className="grid grid-cols-4 border-t bg-muted/40">
               {complaint.phone_no ? (

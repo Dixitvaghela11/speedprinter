@@ -61,6 +61,7 @@ function applyListFilters<T extends { or: Function; eq: Function; gte: Function;
         `party_name.ilike.%${search}%`,
         `phone_no.ilike.%${search}%`,
         `problem.ilike.%${search}%`,
+        `printer_parts.ilike.%${search}%`,
       ].join(","),
     ) as T
   }
@@ -82,7 +83,29 @@ function mapError(error: { message: string; code?: string } | null, fallback: st
   if (error.code === "PGRST205" || isMissingTableError(error.message)) {
     return "Could not find the table public.printer_complaints. Open the Supabase SQL Editor and run supabase/migrations/001_printer_complaints.sql, then click Retry."
   }
+  if (/column .* does not exist/i.test(error.message)) {
+    return "Database columns are missing. Run supabase/migrations/002_add_cost_parts_completed.sql in the Supabase SQL Editor."
+  }
   return error.message || fallback
+}
+
+async function resolveCompletedAt(
+  id: number,
+  status: string | undefined,
+): Promise<string | null | undefined> {
+  if (status === undefined) return undefined
+  if (status !== "Completed") return null
+
+  const { data } = await supabase
+    .from(TABLE)
+    .select("status, completed_at")
+    .eq("id", id)
+    .single()
+
+  if (data?.status === "Completed" && data.completed_at) {
+    return undefined
+  }
+  return new Date().toISOString()
 }
 
 export async function getComplaints(
@@ -117,6 +140,7 @@ export async function getComplaintById(id: number): Promise<PrinterComplaint> {
 export async function createComplaint(
   payload: CreatePrinterComplaint,
 ): Promise<PrinterComplaint> {
+  const status = payload.status ?? "Pending"
   const { data, error } = await supabase
     .from(TABLE)
     .insert({
@@ -125,7 +149,10 @@ export async function createComplaint(
       party_name: payload.party_name ?? null,
       phone_no: payload.phone_no ?? null,
       problem: payload.problem ?? null,
-      status: payload.status ?? "Pending",
+      estimated_cost: payload.estimated_cost ?? null,
+      printer_parts: payload.printer_parts ?? null,
+      status,
+      completed_at: status === "Completed" ? new Date().toISOString() : null,
     })
     .select("*")
     .single()
@@ -137,12 +164,21 @@ export async function updateComplaint(
   id: number,
   payload: UpdatePrinterComplaint,
 ): Promise<PrinterComplaint> {
+  const completedAt = await resolveCompletedAt(id, payload.status)
+  const updateData: UpdatePrinterComplaint & {
+    updated_at: string
+    completed_at?: string | null
+  } = {
+    ...payload,
+    updated_at: new Date().toISOString(),
+  }
+  if (completedAt !== undefined) {
+    updateData.completed_at = completedAt
+  }
+
   const { data, error } = await supabase
     .from(TABLE)
-    .update({
-      ...payload,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("id", id)
     .select("*")
     .single()

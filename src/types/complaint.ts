@@ -14,9 +14,12 @@ export interface PrinterComplaint {
   party_name: string | null
   phone_no: string | null
   problem: string | null
+  estimated_cost: number | null
+  printer_parts: string | null
   status: ComplaintStatus
   created_at: string
   updated_at: string
+  completed_at: string | null
 }
 
 export interface CreatePrinterComplaint {
@@ -25,6 +28,8 @@ export interface CreatePrinterComplaint {
   party_name?: string | null
   phone_no?: string | null
   problem?: string | null
+  estimated_cost?: number | null
+  printer_parts?: string | null
   status?: ComplaintStatus
 }
 

@@ -18,9 +18,12 @@ CREATE TABLE IF NOT EXISTS public.printer_complaints (
     party_name VARCHAR(150),
     phone_no VARCHAR(20),
     problem TEXT,
+    estimated_cost NUMERIC(12, 2),
+    printer_parts TEXT,
     status VARCHAR(30) NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
     CONSTRAINT printer_complaints_status_check
       CHECK (status IN ('Pending', 'In Progress', 'Completed', 'Cancelled'))
 );
@@ -37,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_printer_complaints_party_name ON public.printer_c
 CREATE INDEX IF NOT EXISTS idx_printer_complaints_phone_no ON public.printer_complaints (phone_no);
 CREATE INDEX IF NOT EXISTS idx_printer_complaints_status ON public.printer_complaints (status);
 CREATE INDEX IF NOT EXISTS idx_printer_complaints_created_at ON public.printer_complaints (created_at);
+CREATE INDEX IF NOT EXISTS idx_printer_complaints_completed_at ON public.printer_complaints (completed_at);
 
 ALTER TABLE public.printer_complaints ENABLE ROW LEVEL SECURITY;
 

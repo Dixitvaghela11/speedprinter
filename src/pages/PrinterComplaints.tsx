@@ -38,7 +38,7 @@ export function PrinterComplaints() {
   const isDesktop = useIsDesktop()
   const [filters, setFilters] = useState<ComplaintFilters>({
     search: "",
-    status: "All",
+    status: "Pending",
     datePreset: "all",
   })
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -121,11 +121,22 @@ export function PrinterComplaints() {
     if (submitting) return
     setSubmitting(true)
     try {
+      const estimatedCost = values.estimated_cost.trim()
+      const payload = {
+        printer_name: values.printer_name,
+        serial_no: values.serial_no || null,
+        party_name: values.party_name || null,
+        phone_no: values.phone_no || null,
+        problem: values.problem || null,
+        printer_parts: values.printer_parts || null,
+        estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        status: values.status,
+      }
       if (editing) {
-        await updateComplaint(editing.id, values)
+        await updateComplaint(editing.id, payload)
         toast.success("Complaint updated successfully.")
       } else {
-        await createComplaint(values)
+        await createComplaint(payload)
         toast.success("Complaint created successfully.")
       }
       closeForm()

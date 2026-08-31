@@ -32,6 +32,15 @@ function Row({ label, value, href }: { label: string; value: string; href?: stri
   )
 }
 
+function formatCost(value: number | null) {
+  if (value == null) return "—"
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDetailsProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,6 +59,8 @@ export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDet
               href={complaint.phone_no ? `tel:${complaint.phone_no}` : undefined}
             />
             <Row label="Problem" value={complaint.problem || "—"} />
+            <Row label="Printer Parts" value={complaint.printer_parts || "—"} />
+            <Row label="Estimated Cost" value={formatCost(complaint.estimated_cost)} />
             <div className="grid grid-cols-1 gap-1 border-b py-3 sm:grid-cols-3">
               <dt className="text-sm text-muted-foreground">Status</dt>
               <dd className="sm:col-span-2">
@@ -59,6 +70,14 @@ export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDet
             <Row
               label="Created At"
               value={format(new Date(complaint.created_at), "dd MMM yyyy, hh:mm a")}
+            />
+            <Row
+              label="Completed At"
+              value={
+                complaint.completed_at
+                  ? format(new Date(complaint.completed_at), "dd MMM yyyy, hh:mm a")
+                  : "—"
+              }
             />
             <Row
               label="Updated At"

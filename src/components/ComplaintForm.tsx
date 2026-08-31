@@ -19,6 +19,8 @@ export interface ComplaintFormValues {
   party_name: string
   phone_no: string
   problem: string
+  estimated_cost: string
+  printer_parts: string
   status: ComplaintStatus
 }
 
@@ -36,6 +38,8 @@ const emptyValues: ComplaintFormValues = {
   party_name: "",
   phone_no: "",
   problem: "",
+  estimated_cost: "",
+  printer_parts: "",
   status: "Pending",
 }
 
@@ -50,6 +54,16 @@ export function isValidIndianPhone(value: string) {
     national = national.slice(1)
   }
   return /^[6-9]\d{9}$/.test(national)
+}
+
+function parseEstimatedCost(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return { value: null as number | null, error: null as string | null }
+  const parsed = Number(trimmed.replace(/,/g, ""))
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return { value: null, error: "Please enter a valid estimated cost." }
+  }
+  return { value: parsed, error: null }
 }
 
 export function ComplaintForm({
@@ -70,6 +84,9 @@ export function ComplaintForm({
         party_name: editing.party_name ?? "",
         phone_no: editing.phone_no ?? "",
         problem: editing.problem ?? "",
+        estimated_cost:
+          editing.estimated_cost != null ? String(editing.estimated_cost) : "",
+        printer_parts: editing.printer_parts ?? "",
         status: editing.status,
       })
       setErrors({})
@@ -89,6 +106,10 @@ export function ComplaintForm({
     if (!isValidIndianPhone(next.phone_no)) {
       nextErrors.phone_no = "Please enter a valid phone number."
     }
+    const cost = parseEstimatedCost(next.estimated_cost)
+    if (cost.error) {
+      nextErrors.estimated_cost = cost.error
+    }
     return nextErrors
   }
 
@@ -104,6 +125,7 @@ export function ComplaintForm({
       party_name: values.party_name.trim(),
       phone_no: values.phone_no.trim(),
       problem: values.problem.trim(),
+      printer_parts: values.printer_parts.trim(),
     })
     if (!editing) setValues(emptyValues)
   }
@@ -175,14 +197,21 @@ export function ComplaintForm({
           />
           {errors.phone_no && <p className="text-xs text-destructive">{errors.phone_no}</p>}
         </div>
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="problem">Problem</Label>
-          <Textarea
-            id="problem"
-            placeholder="Describe the printer problem..."
-            value={values.problem}
-            onChange={(e) => setValues((v) => ({ ...v, problem: e.target.value }))}
+        <div className="space-y-2">
+          <Label htmlFor="estimated_cost">Estimated Cost</Label>
+          <Input
+            id="estimated_cost"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="Enter estimated cost"
+            value={values.estimated_cost}
+            onChange={(e) => setValues((v) => ({ ...v, estimated_cost: e.target.value }))}
           />
+          {errors.estimated_cost && (
+            <p className="text-xs text-destructive">{errors.estimated_cost}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Status</Label>
@@ -203,6 +232,24 @@ export function ComplaintForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="printer_parts">Printer Parts</Label>
+          <Textarea
+            id="printer_parts"
+            placeholder="List printer parts used or required..."
+            value={values.printer_parts}
+            onChange={(e) => setValues((v) => ({ ...v, printer_parts: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="problem">Problem</Label>
+          <Textarea
+            id="problem"
+            placeholder="Describe the printer problem..."
+            value={values.problem}
+            onChange={(e) => setValues((v) => ({ ...v, problem: e.target.value }))}
+          />
         </div>
       </div>
 
