@@ -1,4 +1,6 @@
 import { format } from "date-fns"
+import { Printer } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -7,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { printComplaintLabel } from "@/lib/printLabel"
 import type { PrinterComplaint } from "@/types/complaint"
 
 interface ComplaintDetailsProps {
@@ -42,6 +45,15 @@ function formatCost(value: number | null) {
 }
 
 export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDetailsProps) {
+  function handlePrint() {
+    if (!complaint) return
+    try {
+      printComplaintLabel(complaint)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to print label.")
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -85,9 +97,13 @@ export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDet
             />
           </dl>
         )}
-        <div className="flex justify-end">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
+          </Button>
+          <Button onClick={handlePrint} disabled={!complaint}>
+            <Printer />
+            Print Label
           </Button>
         </div>
       </DialogContent>

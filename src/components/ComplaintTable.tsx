@@ -1,5 +1,6 @@
 import { format } from "date-fns"
-import { Eye, Pencil, Phone, Trash2 } from "lucide-react"
+import { Eye, Pencil, Phone, Printer, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableSkeleton } from "@/components/ui/table-skeleton"
+import { printComplaintLabel } from "@/lib/printLabel"
 import type { ComplaintStatus, PrinterComplaint } from "@/types/complaint"
 
 interface ComplaintTableProps {
@@ -49,6 +51,14 @@ function formatCost(value: number | null) {
 function formatDateTime(value: string | null) {
   if (!value) return "—"
   return format(new Date(value), "dd MMM yyyy, hh:mm a")
+}
+
+function handlePrint(complaint: PrinterComplaint) {
+  try {
+    printComplaintLabel(complaint)
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Unable to print label.")
+  }
 }
 
 export function ComplaintTable({
@@ -123,6 +133,9 @@ export function ComplaintTable({
                 <TableCell>{formatDateTime(complaint.completed_at)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => handlePrint(complaint)}>
+                      Print
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => onView(complaint)}>
                       View
                     </Button>
@@ -187,7 +200,7 @@ export function ComplaintTable({
                 </p>
               )}
             </button>
-            <div className="grid grid-cols-4 border-t bg-muted/40">
+            <div className="grid grid-cols-5 border-t bg-muted/40">
               {complaint.phone_no ? (
                 <a
                   href={`tel:${complaint.phone_no}`}
@@ -202,6 +215,14 @@ export function ComplaintTable({
                   Call
                 </span>
               )}
+              <button
+                type="button"
+                className="flex flex-col items-center gap-1 py-2.5 text-xs font-medium"
+                onClick={() => handlePrint(complaint)}
+              >
+                <Printer className="h-4 w-4" />
+                Print
+              </button>
               <button
                 type="button"
                 className="flex flex-col items-center gap-1 py-2.5 text-xs font-medium"
