@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight, Plus, Printer } from "lucide-react"
 import { toast } from "sonner"
 import { ComplaintDetails } from "@/components/ComplaintDetails"
@@ -22,16 +22,16 @@ import {
   deleteComplaint,
   getComplaintStatistics,
   getComplaints,
-  getFilterOptions,
+  getSearchSuggestions,
   isMissingTableError,
   updateComplaint,
 } from "@/services/complaintService"
 import type {
-  ComplaintFilterOptions,
   ComplaintFilters,
   ComplaintStatistics,
   ComplaintStatus,
   PrinterComplaint,
+  SearchSuggestion,
 } from "@/types/complaint"
 
 const PAGE_SIZES = [10, 25, 50, 100]
@@ -40,19 +40,11 @@ export function PrinterComplaints() {
   const isDesktop = useIsDesktop()
   const [filters, setFilters] = useState<ComplaintFilters>({
     search: "",
-    partyName: "",
-    printerModel: "",
-    phoneNo: "",
-    serialNo: "",
     status: "Pending",
     datePreset: "all",
   })
-  const [filterOptions, setFilterOptions] = useState<ComplaintFilterOptions>({
-    partyNames: [],
-    printerModels: [],
-    phoneNos: [],
-    serialNos: [],
-  })
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [complaints, setComplaints] = useState<PrinterComplaint[]>([])
@@ -66,24 +58,31 @@ export function PrinterComplaints() {
   const [toDelete, setToDelete] = useState<PrinterComplaint | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(filters.search), 350)
+    return () => window.clearTimeout(timer)
+  }, [filters.search])
 
   const loadData = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
     try {
-      const [list, statistics, options] = await Promise.all([
+      const [list, statistics, searchSuggestions] = await Promise.all([
         getComplaints({
           ...filters,
+          search: debouncedSearch,
           page,
           pageSize,
         }),
         getComplaintStatistics(),
-        getFilterOptions(),
+        getSearchSuggestions(),
       ])
       setComplaints(list.data)
       setTotal(list.total)
       setStats(statistics)
-      setFilterOptions(options)
+      setSuggestions(searchSuggestions)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load complaints."
       setLoadError(message)
@@ -92,10 +91,7 @@ export function PrinterComplaints() {
       setLoading(false)
     }
   }, [
-    filters.partyName,
-    filters.printerModel,
-    filters.phoneNo,
-    filters.serialNo,
+    debouncedSearch,
     filters.status,
     filters.datePreset,
     filters.customFrom,
@@ -111,10 +107,7 @@ export function PrinterComplaints() {
   useEffect(() => {
     setPage(1)
   }, [
-    filters.partyName,
-    filters.printerModel,
-    filters.phoneNo,
-    filters.serialNo,
+    debouncedSearch,
     filters.status,
     filters.datePreset,
     filters.customFrom,
@@ -129,12 +122,20 @@ export function PrinterComplaints() {
 
   function openCreate() {
     setEditing(null)
-    setFormOpen(true)
+    if (isDesktop) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    } else {
+      setFormOpen(true)
+    }
   }
 
   function openEdit(complaint: PrinterComplaint) {
     setEditing(complaint)
-    setFormOpen(true)
+    if (isDesktop) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    } else {
+      setFormOpen(true)
+    }
   }
 
   async function handleSubmit(values: ComplaintFormValues) {
@@ -209,6 +210,7 @@ export function PrinterComplaints() {
     <ComplaintForm
       editing={editing}
       submitting={submitting}
+      suggestions={suggestions}
       compact={!isDesktop}
       onSubmit={handleSubmit}
       onCancelEdit={closeForm}
@@ -273,7 +275,7 @@ export function PrinterComplaints() {
         <DashboardStats stats={stats} loading={loading && !stats} />
 
         {isDesktop && (
-          <Card>
+          <Card ref={formRef}>
             <CardContent className="p-6">{form}</CardContent>
           </Card>
         )}
@@ -288,7 +290,6 @@ export function PrinterComplaints() {
             </div>
             <ComplaintFiltersBar
               filters={filters}
-              options={filterOptions}
               onChange={setFilters}
             />
           </CardHeader>

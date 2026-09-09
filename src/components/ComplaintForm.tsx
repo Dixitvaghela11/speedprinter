@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ComboboxInput } from "@/components/ui/combobox-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,7 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { COMPLAINT_STATUSES, type ComplaintStatus, type PrinterComplaint } from "@/types/complaint"
+import {
+  COMPLAINT_STATUSES,
+  type ComplaintStatus,
+  type PrinterComplaint,
+  type SearchSuggestion,
+} from "@/types/complaint"
 
 export interface ComplaintFormValues {
   printer_name: string
@@ -29,6 +35,7 @@ interface ComplaintFormProps {
   editing: PrinterComplaint | null
   submitting: boolean
   compact?: boolean
+  suggestions?: SearchSuggestion[]
   onSubmit: (values: ComplaintFormValues) => Promise<void>
   onCancelEdit: () => void
 }
@@ -68,15 +75,46 @@ function parseEstimatedCost(value: string) {
   return { value: parsed, error: null }
 }
 
+function optionsFor(
+  suggestions: SearchSuggestion[],
+  type: SearchSuggestion["type"],
+) {
+  return [
+    ...new Set(
+      suggestions
+        .filter((item) => item.type === type)
+        .map((item) => item.value),
+    ),
+  ]
+}
+
 export function ComplaintForm({
   editing,
   submitting,
   compact = false,
+  suggestions = [],
   onSubmit,
   onCancelEdit,
 }: ComplaintFormProps) {
   const [values, setValues] = useState<ComplaintFormValues>(emptyValues)
   const [errors, setErrors] = useState<Partial<Record<keyof ComplaintFormValues, string>>>({})
+
+  const partyOptions = useMemo(
+    () => optionsFor(suggestions, "Party Name"),
+    [suggestions],
+  )
+  const modelOptions = useMemo(
+    () => optionsFor(suggestions, "Printer Model"),
+    [suggestions],
+  )
+  const phoneOptions = useMemo(
+    () => optionsFor(suggestions, "Phone No"),
+    [suggestions],
+  )
+  const serialOptions = useMemo(
+    () => optionsFor(suggestions, "Serial No"),
+    [suggestions],
+  )
 
   useEffect(() => {
     if (editing) {
@@ -148,7 +186,7 @@ export function ComplaintForm({
         <div className="mb-5">
           <h2 className="text-lg font-semibold">{title}</h2>
           <p className="text-sm text-muted-foreground">
-            Record printer issues, customer details, and service status.
+            Select existing values from the list, or type to create new ones.
           </p>
         </div>
       )}
@@ -156,22 +194,22 @@ export function ComplaintForm({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="party_name">Party Name</Label>
-          <Input
+          <ComboboxInput
             id="party_name"
-            autoComplete="organization"
-            placeholder="Enter party/customer name"
+            placeholder="Select or type party name"
             value={values.party_name}
-            onChange={(e) => setValues((v) => ({ ...v, party_name: e.target.value }))}
+            options={partyOptions}
+            onChange={(party_name) => setValues((v) => ({ ...v, party_name }))}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="printer_name">Printer Model</Label>
-          <Input
+          <ComboboxInput
             id="printer_name"
-            autoComplete="off"
-            placeholder="Enter printer model"
+            placeholder="Select or type printer model"
             value={values.printer_name}
-            onChange={(e) => setValues((v) => ({ ...v, printer_name: e.target.value }))}
+            options={modelOptions}
+            onChange={(printer_name) => setValues((v) => ({ ...v, printer_name }))}
           />
           {errors.printer_name && (
             <p className="text-xs text-destructive">{errors.printer_name}</p>
@@ -179,25 +217,25 @@ export function ComplaintForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone_no">Phone No</Label>
-          <Input
+          <ComboboxInput
             id="phone_no"
             type="tel"
             inputMode="tel"
-            autoComplete="tel"
-            placeholder="Enter phone number"
+            placeholder="Select or type phone number"
             value={values.phone_no}
-            onChange={(e) => setValues((v) => ({ ...v, phone_no: e.target.value }))}
+            options={phoneOptions}
+            onChange={(phone_no) => setValues((v) => ({ ...v, phone_no }))}
           />
           {errors.phone_no && <p className="text-xs text-destructive">{errors.phone_no}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="serial_no">Serial No</Label>
-          <Input
+          <ComboboxInput
             id="serial_no"
-            autoComplete="off"
-            placeholder="Enter serial number"
+            placeholder="Select or type serial number"
             value={values.serial_no}
-            onChange={(e) => setValues((v) => ({ ...v, serial_no: e.target.value }))}
+            options={serialOptions}
+            onChange={(serial_no) => setValues((v) => ({ ...v, serial_no }))}
           />
         </div>
         <div className="space-y-2">

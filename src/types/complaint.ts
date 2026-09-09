@@ -41,21 +41,15 @@ export type DatePreset = "all" | "today" | "7d" | "30d" | "custom"
 
 export interface ComplaintFilters {
   search: string
-  partyName: string
-  printerModel: string
-  phoneNo: string
-  serialNo: string
   status: ComplaintStatus | "All"
   datePreset: DatePreset
   customFrom?: string
   customTo?: string
 }
 
-export interface ComplaintFilterOptions {
-  partyNames: string[]
-  printerModels: string[]
-  phoneNos: string[]
-  serialNos: string[]
+export interface SearchSuggestion {
+  value: string
+  type: "Party Name" | "Printer Model" | "Phone No" | "Serial No"
 }
 
 export interface ComplaintListParams extends ComplaintFilters {

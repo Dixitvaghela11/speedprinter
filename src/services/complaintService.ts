@@ -1,11 +1,11 @@
 import { supabase } from "@/lib/supabase"
 import type {
-  ComplaintFilterOptions,
   ComplaintListParams,
   ComplaintListResult,
   ComplaintStatistics,
   CreatePrinterComplaint,
   PrinterComplaint,
+  SearchSuggestion,
   UpdatePrinterComplaint,
 } from "@/types/complaint"
 
@@ -65,10 +65,6 @@ function applyListFilters<
       ].join(","),
     ) as T
   }
-  if (params.partyName) next = next.eq("party_name", params.partyName) as T
-  if (params.printerModel) next = next.eq("printer_name", params.printerModel) as T
-  if (params.phoneNo) next = next.eq("phone_no", params.phoneNo) as T
-  if (params.serialNo) next = next.eq("serial_no", params.serialNo) as T
   if (params.status !== "All") {
     next = next.eq("status", params.status) as T
   }
@@ -93,14 +89,18 @@ function mapError(error: { message: string; code?: string } | null, fallback: st
   return error.message || fallback
 }
 
-function uniqueSorted(values: Array<string | null | undefined>) {
-  return [
-    ...new Set(
-      values
-        .map((value) => value?.trim())
-        .filter((value): value is string => Boolean(value)),
-    ),
-  ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+function pushUnique(
+  target: SearchSuggestion[],
+  seen: Set<string>,
+  value: string | null | undefined,
+  type: SearchSuggestion["type"],
+) {
+  const trimmed = value?.trim()
+  if (!trimmed) return
+  const key = `${type}:${trimmed.toLowerCase()}`
+  if (seen.has(key)) return
+  seen.add(key)
+  target.push({ value: trimmed, type })
 }
 
 async function resolveCompletedAt(
@@ -141,22 +141,27 @@ export async function getComplaints(
   return { data: (data ?? []) as PrinterComplaint[], total: count ?? 0 }
 }
 
-export async function getFilterOptions(): Promise<ComplaintFilterOptions> {
+export async function getSearchSuggestions(): Promise<SearchSuggestion[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select("party_name, printer_name, phone_no, serial_no")
     .order("created_at", { ascending: false })
     .limit(2000)
 
-  if (error) throw new Error(mapError(error, "Unable to load filter options."))
+  if (error) throw new Error(mapError(error, "Unable to load search suggestions."))
 
-  const rows = data ?? []
-  return {
-    partyNames: uniqueSorted(rows.map((row) => row.party_name as string | null)),
-    printerModels: uniqueSorted(rows.map((row) => row.printer_name as string | null)),
-    phoneNos: uniqueSorted(rows.map((row) => row.phone_no as string | null)),
-    serialNos: uniqueSorted(rows.map((row) => row.serial_no as string | null)),
+  const suggestions: SearchSuggestion[] = []
+  const seen = new Set<string>()
+  for (const row of data ?? []) {
+    pushUnique(suggestions, seen, row.party_name as string | null, "Party Name")
+    pushUnique(suggestions, seen, row.printer_name as string | null, "Printer Model")
+    pushUnique(suggestions, seen, row.phone_no as string | null, "Phone No")
+    pushUnique(suggestions, seen, row.serial_no as string | null, "Serial No")
   }
+
+  return suggestions.sort((a, b) =>
+    a.value.localeCompare(b.value, undefined, { sensitivity: "base" }),
+  )
 }
 
 export async function getComplaintById(id: number): Promise<PrinterComplaint> {
