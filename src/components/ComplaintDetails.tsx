@@ -62,14 +62,15 @@ export function ComplaintDetails({ complaint, open, onOpenChange }: ComplaintDet
         </DialogHeader>
         {complaint && (
           <dl>
-            <Row label="Printer Name" value={complaint.printer_name} />
-            <Row label="Serial No" value={complaint.serial_no || "—"} />
             <Row label="Party Name" value={complaint.party_name || "—"} />
+            <Row label="Printer Model" value={complaint.printer_name} />
+            <Row label="Serial No" value={complaint.serial_no || "—"} />
             <Row
               label="Phone No"
               value={complaint.phone_no || "—"}
               href={complaint.phone_no ? `tel:${complaint.phone_no}` : undefined}
             />
+            <Row label="Toner" value={complaint.toner ? "Yes" : "No"} />
             <Row label="Problem" value={complaint.problem || "—"} />
             <Row label="Printer Parts" value={complaint.printer_parts || "—"} />
             <Row label="Estimated Cost" value={formatCost(complaint.estimated_cost)} />

@@ -21,6 +21,7 @@ export interface ComplaintFormValues {
   problem: string
   estimated_cost: string
   printer_parts: string
+  toner: "yes" | "no"
   status: ComplaintStatus
 }
 
@@ -40,6 +41,7 @@ const emptyValues: ComplaintFormValues = {
   problem: "",
   estimated_cost: "",
   printer_parts: "",
+  toner: "no",
   status: "Pending",
 }
 
@@ -87,6 +89,7 @@ export function ComplaintForm({
         estimated_cost:
           editing.estimated_cost != null ? String(editing.estimated_cost) : "",
         printer_parts: editing.printer_parts ?? "",
+        toner: editing.toner ? "yes" : "no",
         status: editing.status,
       })
       setErrors({})
@@ -101,7 +104,7 @@ export function ComplaintForm({
   function validate(next: ComplaintFormValues) {
     const nextErrors: Partial<Record<keyof ComplaintFormValues, string>> = {}
     if (!next.printer_name.trim()) {
-      nextErrors.printer_name = "Printer name is required."
+      nextErrors.printer_name = "Printer model is required."
     }
     if (!isValidIndianPhone(next.phone_no)) {
       nextErrors.phone_no = "Please enter a valid phone number."
@@ -152,29 +155,6 @@ export function ComplaintForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="printer_name">Printer Name</Label>
-          <Input
-            id="printer_name"
-            autoComplete="off"
-            placeholder="Enter printer name"
-            value={values.printer_name}
-            onChange={(e) => setValues((v) => ({ ...v, printer_name: e.target.value }))}
-          />
-          {errors.printer_name && (
-            <p className="text-xs text-destructive">{errors.printer_name}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="serial_no">Serial No</Label>
-          <Input
-            id="serial_no"
-            autoComplete="off"
-            placeholder="Enter serial number"
-            value={values.serial_no}
-            onChange={(e) => setValues((v) => ({ ...v, serial_no: e.target.value }))}
-          />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="party_name">Party Name</Label>
           <Input
             id="party_name"
@@ -183,6 +163,19 @@ export function ComplaintForm({
             value={values.party_name}
             onChange={(e) => setValues((v) => ({ ...v, party_name: e.target.value }))}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="printer_name">Printer Model</Label>
+          <Input
+            id="printer_name"
+            autoComplete="off"
+            placeholder="Enter printer model"
+            value={values.printer_name}
+            onChange={(e) => setValues((v) => ({ ...v, printer_name: e.target.value }))}
+          />
+          {errors.printer_name && (
+            <p className="text-xs text-destructive">{errors.printer_name}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone_no">Phone No</Label>
@@ -196,6 +189,43 @@ export function ComplaintForm({
             onChange={(e) => setValues((v) => ({ ...v, phone_no: e.target.value }))}
           />
           {errors.phone_no && <p className="text-xs text-destructive">{errors.phone_no}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="serial_no">Serial No</Label>
+          <Input
+            id="serial_no"
+            autoComplete="off"
+            placeholder="Enter serial number"
+            value={values.serial_no}
+            onChange={(e) => setValues((v) => ({ ...v, serial_no: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Toner</Label>
+          <div className="flex h-11 items-center gap-5 rounded-xl border border-input bg-white px-3.5 md:h-10">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="radio"
+                name="toner"
+                value="yes"
+                checked={values.toner === "yes"}
+                onChange={() => setValues((v) => ({ ...v, toner: "yes" }))}
+                className="h-4 w-4 accent-primary"
+              />
+              Yes
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="radio"
+                name="toner"
+                value="no"
+                checked={values.toner === "no"}
+                onChange={() => setValues((v) => ({ ...v, toner: "no" }))}
+                className="h-4 w-4 accent-primary"
+              />
+              No
+            </label>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="estimated_cost">Estimated Cost</Label>

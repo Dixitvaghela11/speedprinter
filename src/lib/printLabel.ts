@@ -13,7 +13,7 @@ function escapeHtml(value: string) {
 export function printComplaintLabel(complaint: PrinterComplaint) {
   const partyName = escapeHtml(complaint.party_name?.trim() || "N/A")
   const phoneNo = escapeHtml(complaint.phone_no?.trim() || "N/A")
-  const createdDate = escapeHtml(format(new Date(complaint.created_at), "dd/MM/yyyy HH:mm"))
+  const createdDate = escapeHtml(format(new Date(complaint.created_at), "dd/MM/yyyy hh:mm a"))
 
   const printWindow = window.open("", "_blank", "width=400,height=300")
   if (!printWindow) {

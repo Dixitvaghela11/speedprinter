@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.printer_complaints (
     problem TEXT,
     estimated_cost NUMERIC(12, 2),
     printer_parts TEXT,
+    toner BOOLEAN NOT NULL DEFAULT false,
     status VARCHAR(30) NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

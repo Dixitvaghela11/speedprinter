@@ -16,6 +16,7 @@ export interface PrinterComplaint {
   problem: string | null
   estimated_cost: number | null
   printer_parts: string | null
+  toner: boolean
   status: ComplaintStatus
   created_at: string
   updated_at: string
@@ -30,6 +31,7 @@ export interface CreatePrinterComplaint {
   problem?: string | null
   estimated_cost?: number | null
   printer_parts?: string | null
+  toner?: boolean
   status?: ComplaintStatus
 }
 
@@ -39,10 +41,21 @@ export type DatePreset = "all" | "today" | "7d" | "30d" | "custom"
 
 export interface ComplaintFilters {
   search: string
+  partyName: string
+  printerModel: string
+  phoneNo: string
+  serialNo: string
   status: ComplaintStatus | "All"
   datePreset: DatePreset
   customFrom?: string
   customTo?: string
+}
+
+export interface ComplaintFilterOptions {
+  partyNames: string[]
+  printerModels: string[]
+  phoneNos: string[]
+  serialNos: string[]
 }
 
 export interface ComplaintListParams extends ComplaintFilters {

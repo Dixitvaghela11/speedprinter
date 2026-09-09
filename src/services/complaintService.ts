@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import type {
+  ComplaintFilterOptions,
   ComplaintListParams,
   ComplaintListResult,
   ComplaintStatistics,
@@ -47,10 +48,9 @@ function resolveDateRange(params: ComplaintListParams) {
   return { from: undefined, to: undefined }
 }
 
-function applyListFilters<T extends { or: Function; eq: Function; gte: Function; lte: Function }>(
-  query: T,
-  params: ComplaintListParams,
-): T {
+function applyListFilters<
+  T extends { or: Function; eq: Function; gte: Function; lte: Function },
+>(query: T, params: ComplaintListParams): T {
   let next = query
   const search = sanitizeSearch(params.search)
   if (search) {
@@ -65,6 +65,10 @@ function applyListFilters<T extends { or: Function; eq: Function; gte: Function;
       ].join(","),
     ) as T
   }
+  if (params.partyName) next = next.eq("party_name", params.partyName) as T
+  if (params.printerModel) next = next.eq("printer_name", params.printerModel) as T
+  if (params.phoneNo) next = next.eq("phone_no", params.phoneNo) as T
+  if (params.serialNo) next = next.eq("serial_no", params.serialNo) as T
   if (params.status !== "All") {
     next = next.eq("status", params.status) as T
   }
@@ -84,9 +88,19 @@ function mapError(error: { message: string; code?: string } | null, fallback: st
     return "Could not find the table public.printer_complaints. Open the Supabase SQL Editor and run supabase/migrations/001_printer_complaints.sql, then click Retry."
   }
   if (/column .* does not exist/i.test(error.message)) {
-    return "Database columns are missing. Run supabase/migrations/002_add_cost_parts_completed.sql in the Supabase SQL Editor."
+    return "Database columns are missing. Run the latest migration SQL files in the Supabase SQL Editor (002 and 003)."
   }
   return error.message || fallback
+}
+
+function uniqueSorted(values: Array<string | null | undefined>) {
+  return [
+    ...new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
 }
 
 async function resolveCompletedAt(
@@ -127,6 +141,24 @@ export async function getComplaints(
   return { data: (data ?? []) as PrinterComplaint[], total: count ?? 0 }
 }
 
+export async function getFilterOptions(): Promise<ComplaintFilterOptions> {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select("party_name, printer_name, phone_no, serial_no")
+    .order("created_at", { ascending: false })
+    .limit(2000)
+
+  if (error) throw new Error(mapError(error, "Unable to load filter options."))
+
+  const rows = data ?? []
+  return {
+    partyNames: uniqueSorted(rows.map((row) => row.party_name as string | null)),
+    printerModels: uniqueSorted(rows.map((row) => row.printer_name as string | null)),
+    phoneNos: uniqueSorted(rows.map((row) => row.phone_no as string | null)),
+    serialNos: uniqueSorted(rows.map((row) => row.serial_no as string | null)),
+  }
+}
+
 export async function getComplaintById(id: number): Promise<PrinterComplaint> {
   const { data, error } = await supabase
     .from(TABLE)
@@ -151,6 +183,7 @@ export async function createComplaint(
       problem: payload.problem ?? null,
       estimated_cost: payload.estimated_cost ?? null,
       printer_parts: payload.printer_parts ?? null,
+      toner: payload.toner ?? false,
       status,
       completed_at: status === "Completed" ? new Date().toISOString() : null,
     })

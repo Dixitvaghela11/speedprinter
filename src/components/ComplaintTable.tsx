@@ -80,10 +80,11 @@ export function ComplaintTable({
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
-              <TableHead>Printer Name</TableHead>
-              <TableHead>Serial No</TableHead>
               <TableHead>Party Name</TableHead>
+              <TableHead>Printer Model</TableHead>
+              <TableHead>Serial No</TableHead>
               <TableHead>Phone No</TableHead>
+              <TableHead>Toner</TableHead>
               <TableHead>Problem</TableHead>
               <TableHead>Printer Parts</TableHead>
               <TableHead>Est. Cost</TableHead>
@@ -99,10 +100,11 @@ export function ComplaintTable({
                 <TableCell className="text-muted-foreground">
                   {(page - 1) * pageSize + index + 1}
                 </TableCell>
-                <TableCell className="font-medium">{complaint.printer_name}</TableCell>
+                <TableCell className="font-medium">{complaint.party_name || "—"}</TableCell>
+                <TableCell>{complaint.printer_name}</TableCell>
                 <TableCell>{complaint.serial_no || "—"}</TableCell>
-                <TableCell>{complaint.party_name || "—"}</TableCell>
                 <TableCell>{complaint.phone_no || "—"}</TableCell>
+                <TableCell>{complaint.toner ? "Yes" : "No"}</TableCell>
                 <TableCell className="max-w-48 truncate">{complaint.problem || "—"}</TableCell>
                 <TableCell className="max-w-48 truncate">{complaint.printer_parts || "—"}</TableCell>
                 <TableCell>{formatCost(complaint.estimated_cost)}</TableCell>
@@ -171,9 +173,11 @@ export function ComplaintTable({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-base font-semibold">{complaint.printer_name}</p>
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                  <p className="truncate text-base font-semibold">
                     {complaint.party_name || "No party name"}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                    {complaint.printer_name}
                   </p>
                 </div>
                 <Badge variant={statusVariant(complaint.status)}>{complaint.status}</Badge>
@@ -188,6 +192,8 @@ export function ComplaintTable({
               )}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span>{complaint.serial_no || "No serial"}</span>
+                <span>·</span>
+                <span>Toner: {complaint.toner ? "Yes" : "No"}</span>
                 <span>·</span>
                 <span>{formatCost(complaint.estimated_cost)}</span>
               </div>

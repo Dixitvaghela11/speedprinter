@@ -22,10 +22,12 @@ import {
   deleteComplaint,
   getComplaintStatistics,
   getComplaints,
+  getFilterOptions,
   isMissingTableError,
   updateComplaint,
 } from "@/services/complaintService"
 import type {
+  ComplaintFilterOptions,
   ComplaintFilters,
   ComplaintStatistics,
   ComplaintStatus,
@@ -38,10 +40,19 @@ export function PrinterComplaints() {
   const isDesktop = useIsDesktop()
   const [filters, setFilters] = useState<ComplaintFilters>({
     search: "",
+    partyName: "",
+    printerModel: "",
+    phoneNo: "",
+    serialNo: "",
     status: "Pending",
     datePreset: "all",
   })
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [filterOptions, setFilterOptions] = useState<ComplaintFilterOptions>({
+    partyNames: [],
+    printerModels: [],
+    phoneNos: [],
+    serialNos: [],
+  })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [complaints, setComplaints] = useState<PrinterComplaint[]>([])
@@ -56,27 +67,23 @@ export function PrinterComplaints() {
   const [formOpen, setFormOpen] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedSearch(filters.search), 350)
-    return () => window.clearTimeout(timer)
-  }, [filters.search])
-
   const loadData = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
     try {
-      const [list, statistics] = await Promise.all([
+      const [list, statistics, options] = await Promise.all([
         getComplaints({
           ...filters,
-          search: debouncedSearch,
           page,
           pageSize,
         }),
         getComplaintStatistics(),
+        getFilterOptions(),
       ])
       setComplaints(list.data)
       setTotal(list.total)
       setStats(statistics)
+      setFilterOptions(options)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load complaints."
       setLoadError(message)
@@ -85,7 +92,10 @@ export function PrinterComplaints() {
       setLoading(false)
     }
   }, [
-    debouncedSearch,
+    filters.partyName,
+    filters.printerModel,
+    filters.phoneNo,
+    filters.serialNo,
     filters.status,
     filters.datePreset,
     filters.customFrom,
@@ -100,7 +110,17 @@ export function PrinterComplaints() {
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, filters.status, filters.datePreset, filters.customFrom, filters.customTo, pageSize])
+  }, [
+    filters.partyName,
+    filters.printerModel,
+    filters.phoneNo,
+    filters.serialNo,
+    filters.status,
+    filters.datePreset,
+    filters.customFrom,
+    filters.customTo,
+    pageSize,
+  ])
 
   function closeForm() {
     setEditing(null)
@@ -130,6 +150,7 @@ export function PrinterComplaints() {
         problem: values.problem || null,
         printer_parts: values.printer_parts || null,
         estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        toner: values.toner === "yes",
         status: values.status,
       }
       if (editing) {
@@ -265,7 +286,11 @@ export function PrinterComplaints() {
                 {total} total
               </span>
             </div>
-            <ComplaintFiltersBar filters={filters} onChange={setFilters} />
+            <ComplaintFiltersBar
+              filters={filters}
+              options={filterOptions}
+              onChange={setFilters}
+            />
           </CardHeader>
           <CardContent className="space-y-4 p-4 pt-0 md:p-6 md:pt-0">
             {showEmpty ? (
