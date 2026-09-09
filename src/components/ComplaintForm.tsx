@@ -216,19 +216,6 @@ export function ComplaintForm({
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone_no">Phone No</Label>
-          <ComboboxInput
-            id="phone_no"
-            type="tel"
-            inputMode="tel"
-            placeholder="Select or type phone number"
-            value={values.phone_no}
-            options={phoneOptions}
-            onChange={(phone_no) => setValues((v) => ({ ...v, phone_no }))}
-          />
-          {errors.phone_no && <p className="text-xs text-destructive">{errors.phone_no}</p>}
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="serial_no">Serial No</Label>
           <ComboboxInput
             id="serial_no"
@@ -264,6 +251,19 @@ export function ComplaintForm({
               No
             </label>
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone_no">Mobile No</Label>
+          <ComboboxInput
+            id="phone_no"
+            type="tel"
+            inputMode="tel"
+            placeholder="Select or type mobile number"
+            value={values.phone_no}
+            options={phoneOptions}
+            onChange={(phone_no) => setValues((v) => ({ ...v, phone_no }))}
+          />
+          {errors.phone_no && <p className="text-xs text-destructive">{errors.phone_no}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="estimated_cost">Estimated Cost</Label>
@@ -302,21 +302,21 @@ export function ComplaintForm({
           </Select>
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="printer_parts">Printer Parts</Label>
-          <Textarea
-            id="printer_parts"
-            placeholder="List printer parts used or required..."
-            value={values.printer_parts}
-            onChange={(e) => setValues((v) => ({ ...v, printer_parts: e.target.value }))}
-          />
-        </div>
-        <div className="space-y-2 md:col-span-2">
           <Label htmlFor="problem">Problem</Label>
           <Textarea
             id="problem"
             placeholder="Describe the printer problem..."
             value={values.problem}
             onChange={(e) => setValues((v) => ({ ...v, problem: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="printer_parts">Printer Parts</Label>
+          <Textarea
+            id="printer_parts"
+            placeholder="List printer parts used or required..."
+            value={values.printer_parts}
+            onChange={(e) => setValues((v) => ({ ...v, printer_parts: e.target.value }))}
           />
         </div>
       </div>

@@ -6,7 +6,6 @@ import { ComplaintFiltersBar } from "@/components/ComplaintFilters"
 import { ComplaintForm, type ComplaintFormValues } from "@/components/ComplaintForm"
 import { ComplaintTable } from "@/components/ComplaintTable"
 import { DashboardStats } from "@/components/DashboardStats"
-import { DeleteComplaintDialog } from "@/components/DeleteComplaintDialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -19,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import {
   createComplaint,
-  deleteComplaint,
   getComplaintStatistics,
   getComplaints,
   getSearchSuggestions,
@@ -52,10 +50,8 @@ export function PrinterComplaints() {
   const [stats, setStats] = useState<ComplaintStatistics | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState<PrinterComplaint | null>(null)
   const [viewing, setViewing] = useState<PrinterComplaint | null>(null)
-  const [toDelete, setToDelete] = useState<PrinterComplaint | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
@@ -186,22 +182,6 @@ export function PrinterComplaints() {
     }
   }
 
-  async function handleDelete() {
-    if (!toDelete) return
-    setDeleting(true)
-    try {
-      await deleteComplaint(toDelete.id)
-      toast.success("Complaint deleted successfully.")
-      setToDelete(null)
-      if (editing?.id === toDelete.id) closeForm()
-      await loadData()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to delete complaint.")
-    } finally {
-      setDeleting(false)
-    }
-  }
-
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)
@@ -316,7 +296,6 @@ export function PrinterComplaints() {
                 pageSize={pageSize}
                 onView={setViewing}
                 onEdit={openEdit}
-                onDelete={setToDelete}
                 onStatusChange={handleStatusChange}
               />
             )}
@@ -404,14 +383,6 @@ export function PrinterComplaints() {
         onOpenChange={(open) => {
           if (!open) setViewing(null)
         }}
-      />
-      <DeleteComplaintDialog
-        open={Boolean(toDelete)}
-        loading={deleting}
-        onOpenChange={(open) => {
-          if (!open && !deleting) setToDelete(null)
-        }}
-        onConfirm={handleDelete}
       />
     </div>
   )
