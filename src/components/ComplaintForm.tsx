@@ -116,6 +116,25 @@ export function ComplaintForm({
     [suggestions],
   )
 
+  const partyPhoneMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of suggestions) {
+      if (item.type !== "Party Name" || !item.phoneNo) continue
+      const key = item.value.trim().toLowerCase()
+      if (!map.has(key)) map.set(key, item.phoneNo)
+    }
+    return map
+  }, [suggestions])
+
+  function handlePartyChange(party_name: string) {
+    const phone = partyPhoneMap.get(party_name.trim().toLowerCase())
+    setValues((v) => ({
+      ...v,
+      party_name,
+      ...(phone ? { phone_no: phone } : {}),
+    }))
+  }
+
   useEffect(() => {
     if (editing) {
       setValues({
@@ -199,7 +218,7 @@ export function ComplaintForm({
             placeholder="Select or type party name"
             value={values.party_name}
             options={partyOptions}
-            onChange={(party_name) => setValues((v) => ({ ...v, party_name }))}
+            onChange={handlePartyChange}
           />
         </div>
         <div className="space-y-2">

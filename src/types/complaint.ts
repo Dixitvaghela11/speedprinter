@@ -50,6 +50,7 @@ export interface ComplaintFilters {
 export interface SearchSuggestion {
   value: string
   type: "Party Name" | "Printer Model" | "Phone No" | "Serial No"
+  phoneNo?: string | null
 }
 
 export interface ComplaintListParams extends ComplaintFilters {

@@ -94,13 +94,18 @@ function pushUnique(
   seen: Set<string>,
   value: string | null | undefined,
   type: SearchSuggestion["type"],
+  phoneNo?: string | null,
 ) {
   const trimmed = value?.trim()
   if (!trimmed) return
   const key = `${type}:${trimmed.toLowerCase()}`
   if (seen.has(key)) return
   seen.add(key)
-  target.push({ value: trimmed, type })
+  target.push({
+    value: trimmed,
+    type,
+    phoneNo: phoneNo?.trim() || null,
+  })
 }
 
 async function resolveCompletedAt(
@@ -153,7 +158,13 @@ export async function getSearchSuggestions(): Promise<SearchSuggestion[]> {
   const suggestions: SearchSuggestion[] = []
   const seen = new Set<string>()
   for (const row of data ?? []) {
-    pushUnique(suggestions, seen, row.party_name as string | null, "Party Name")
+    pushUnique(
+      suggestions,
+      seen,
+      row.party_name as string | null,
+      "Party Name",
+      row.phone_no as string | null,
+    )
     pushUnique(suggestions, seen, row.printer_name as string | null, "Printer Model")
     pushUnique(suggestions, seen, row.phone_no as string | null, "Phone No")
     pushUnique(suggestions, seen, row.serial_no as string | null, "Serial No")
