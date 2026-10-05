@@ -1,4 +1,5 @@
-import { Search } from "lucide-react"
+import { FileSpreadsheet, FileText, Loader2, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -15,74 +16,111 @@ import {
 
 interface ComplaintFiltersProps {
   filters: ComplaintFilters
+  exporting?: "pdf" | "excel" | null
   onChange: (filters: ComplaintFilters) => void
+  onExportPdf: () => void
+  onExportExcel: () => void
 }
 
-export function ComplaintFiltersBar({ filters, onChange }: ComplaintFiltersProps) {
+export function ComplaintFiltersBar({
+  filters,
+  exporting = null,
+  onChange,
+  onExportPdf,
+  onExportExcel,
+}: ComplaintFiltersProps) {
   return (
-    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12">
-      <div className="relative sm:col-span-2 lg:col-span-5">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-10"
-          placeholder="Search party, printer model, phone or serial..."
-          value={filters.search}
-          onChange={(e) => onChange({ ...filters, search: e.target.value })}
-        />
-      </div>
-      <div className="lg:col-span-3">
-        <Select
-          value={filters.status}
-          onValueChange={(value) =>
-            onChange({ ...filters, status: value as ComplaintFilters["status"] })
-          }
-        >
-          <SelectTrigger aria-label="Filter by status">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All statuses</SelectItem>
-            {COMPLAINT_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
-                {status}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="lg:col-span-4">
-        <Select
-          value={filters.datePreset}
-          onValueChange={(value) =>
-            onChange({ ...filters, datePreset: value as DatePreset })
-          }
-        >
-          <SelectTrigger aria-label="Filter by date">
-            <SelectValue placeholder="Date" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All dates</SelectItem>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="7d">Last 7 Days</SelectItem>
-            <SelectItem value="30d">Last 30 Days</SelectItem>
-            <SelectItem value="custom">Custom Date Range</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      {filters.datePreset === "custom" && (
-        <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-12">
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="relative sm:col-span-2 lg:col-span-5">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            type="date"
-            value={filters.customFrom ?? ""}
-            onChange={(e) => onChange({ ...filters, customFrom: e.target.value })}
-          />
-          <Input
-            type="date"
-            value={filters.customTo ?? ""}
-            onChange={(e) => onChange({ ...filters, customTo: e.target.value })}
+            className="pl-10"
+            placeholder="Search party, printer model, phone or serial..."
+            value={filters.search}
+            onChange={(e) => onChange({ ...filters, search: e.target.value })}
           />
         </div>
-      )}
+        <div className="lg:col-span-3">
+          <Select
+            value={filters.status}
+            onValueChange={(value) =>
+              onChange({ ...filters, status: value as ComplaintFilters["status"] })
+            }
+          >
+            <SelectTrigger aria-label="Filter by status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All statuses</SelectItem>
+              {COMPLAINT_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="lg:col-span-4">
+          <Select
+            value={filters.datePreset}
+            onValueChange={(value) =>
+              onChange({ ...filters, datePreset: value as DatePreset })
+            }
+          >
+            <SelectTrigger aria-label="Filter by date">
+              <SelectValue placeholder="Date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All dates</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="custom">Custom Date Range</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {filters.datePreset === "custom" && (
+          <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-12">
+            <Input
+              type="date"
+              value={filters.customFrom ?? ""}
+              onChange={(e) => onChange({ ...filters, customFrom: e.target.value })}
+            />
+            <Input
+              type="date"
+              value={filters.customTo ?? ""}
+              onChange={(e) => onChange({ ...filters, customTo: e.target.value })}
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={Boolean(exporting)}
+          onClick={onExportExcel}
+        >
+          {exporting === "excel" ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <FileSpreadsheet />
+          )}
+          Excel Export
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={Boolean(exporting)}
+          onClick={onExportPdf}
+        >
+          {exporting === "pdf" ? <Loader2 className="animate-spin" /> : <FileText />}
+          PDF Export
+        </Button>
+      </div>
     </div>
   )
 }

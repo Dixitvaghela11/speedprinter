@@ -73,7 +73,8 @@ export function ComplaintTable({
 
   return (
     <>
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="hidden lg:block">
+        <div className="w-full overflow-x-auto overscroll-x-contain rounded-lg border [scrollbar-gutter:stable]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -148,6 +149,7 @@ export function ComplaintTable({
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <div className="space-y-3 lg:hidden">

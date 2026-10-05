@@ -21,7 +21,12 @@ function startOfLocalDay(date: Date) {
   return copy
 }
 
-function resolveDateRange(params: ComplaintListParams) {
+type DateFilterInput = Pick<
+  ComplaintListParams,
+  "datePreset" | "customFrom" | "customTo"
+>
+
+export function resolveDateRange(params: DateFilterInput) {
   const now = new Date()
   if (params.datePreset === "today") {
     return { from: startOfLocalDay(now).toISOString(), to: undefined }
@@ -48,9 +53,24 @@ function resolveDateRange(params: ComplaintListParams) {
   return { from: undefined, to: undefined }
 }
 
+function applyDateRange<T extends { gte: Function; lte: Function }>(
+  query: T,
+  params: DateFilterInput,
+): T {
+  let next = query
+  const range = resolveDateRange(params)
+  if (range.from) next = next.gte("created_at", range.from) as T
+  if (range.to) next = next.lte("created_at", range.to) as T
+  return next
+}
+
 function applyListFilters<
   T extends { or: Function; eq: Function; gte: Function; lte: Function },
->(query: T, params: ComplaintListParams): T {
+>(
+  query: T,
+  params: ComplaintListParams,
+  options?: { ignoreStatus?: boolean },
+): T {
   let next = query
   const search = sanitizeSearch(params.search)
   if (search) {
@@ -65,13 +85,10 @@ function applyListFilters<
       ].join(","),
     ) as T
   }
-  if (params.status !== "All") {
+  if (!options?.ignoreStatus && params.status !== "All") {
     next = next.eq("status", params.status) as T
   }
-  const range = resolveDateRange(params)
-  if (range.from) next = next.gte("created_at", range.from) as T
-  if (range.to) next = next.lte("created_at", range.to) as T
-  return next
+  return applyDateRange(next, params)
 }
 
 export function isMissingTableError(message: string) {
@@ -240,16 +257,21 @@ export async function deleteComplaint(id: number): Promise<void> {
   if (error) throw new Error(mapError(error, "Unable to delete complaint."))
 }
 
-export async function getComplaintStatistics(): Promise<ComplaintStatistics> {
+export async function getComplaintStatistics(
+  dateFilters: DateFilterInput,
+): Promise<ComplaintStatistics> {
   const statuses = ["Pending", "In Progress", "Completed", "Cancelled"] as const
+
+  const buildCountQuery = (status?: (typeof statuses)[number]) => {
+    let query = supabase.from(TABLE).select("id", { count: "exact", head: true })
+    query = applyDateRange(query, dateFilters)
+    if (status) query = query.eq("status", status)
+    return query
+  }
+
   const [totalRes, ...statusResults] = await Promise.all([
-    supabase.from(TABLE).select("id", { count: "exact", head: true }),
-    ...statuses.map((status) =>
-      supabase
-        .from(TABLE)
-        .select("id", { count: "exact", head: true })
-        .eq("status", status),
-    ),
+    buildCountQuery(),
+    ...statuses.map((status) => buildCountQuery(status)),
   ])
 
   const firstError =
@@ -265,4 +287,39 @@ export async function getComplaintStatistics(): Promise<ComplaintStatistics> {
     completed: statusResults[2]?.count ?? 0,
     cancelled: statusResults[3]?.count ?? 0,
   }
+}
+
+export async function getComplaintsForExport(
+  params: Omit<ComplaintListParams, "page" | "pageSize">,
+): Promise<PrinterComplaint[]> {
+  const pageSize = 1000
+  let page = 0
+  const rows: PrinterComplaint[] = []
+
+  while (true) {
+    const from = page * pageSize
+    const to = from + pageSize - 1
+    let query = supabase
+      .from(TABLE)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to)
+
+    query = applyListFilters(
+      query,
+      { ...params, page: page + 1, pageSize },
+      { ignoreStatus: true },
+    )
+
+    const { data, error } = await query
+    if (error) throw new Error(mapError(error, "Unable to export complaints."))
+
+    const batch = (data ?? []) as PrinterComplaint[]
+    rows.push(...batch)
+    if (batch.length < pageSize) break
+    page += 1
+    if (page > 50) break
+  }
+
+  return rows
 }

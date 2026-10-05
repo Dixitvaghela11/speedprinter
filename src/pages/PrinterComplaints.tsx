@@ -17,9 +17,15 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import {
+  exportComplaintsToExcel,
+  exportComplaintsToPdf,
+  getDateRangeLabel,
+} from "@/lib/exportComplaints"
+import {
   createComplaint,
   getComplaintStatistics,
   getComplaints,
+  getComplaintsForExport,
   getSearchSuggestions,
   isMissingTableError,
   updateComplaint,
@@ -39,7 +45,7 @@ export function PrinterComplaints() {
   const [filters, setFilters] = useState<ComplaintFilters>({
     search: "",
     status: "Pending",
-    datePreset: "all",
+    datePreset: "7d",
   })
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
@@ -54,6 +60,7 @@ export function PrinterComplaints() {
   const [viewing, setViewing] = useState<PrinterComplaint | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -72,7 +79,11 @@ export function PrinterComplaints() {
           page,
           pageSize,
         }),
-        getComplaintStatistics(),
+        getComplaintStatistics({
+          datePreset: filters.datePreset,
+          customFrom: filters.customFrom,
+          customTo: filters.customTo,
+        }),
         getSearchSuggestions(),
       ])
       setComplaints(list.data)
@@ -182,6 +193,47 @@ export function PrinterComplaints() {
     }
   }
 
+  async function handleExport(type: "pdf" | "excel") {
+    if (exporting) return
+    if (
+      filters.datePreset === "custom" &&
+      (!filters.customFrom || !filters.customTo)
+    ) {
+      toast.error("Please select both From and To dates for custom range export.")
+      return
+    }
+    setExporting(type)
+    try {
+      const rows = await getComplaintsForExport({
+        search: debouncedSearch,
+        status: "All",
+        datePreset: filters.datePreset,
+        customFrom: filters.customFrom,
+        customTo: filters.customTo,
+      })
+      const rangeLabel = getDateRangeLabel({
+        datePreset: filters.datePreset,
+        customFrom: filters.customFrom,
+        customTo: filters.customTo,
+      })
+      if (rows.length === 0) {
+        toast.error("No complaints found for the selected date range.")
+        return
+      }
+      if (type === "pdf") {
+        exportComplaintsToPdf(rows, rangeLabel)
+        toast.success(`PDF exported (${rows.length} records).`)
+      } else {
+        exportComplaintsToExcel(rows, rangeLabel)
+        toast.success(`Excel exported (${rows.length} records).`)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to export complaints.")
+    } finally {
+      setExporting(null)
+    }
+  }
+
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)
@@ -252,7 +304,15 @@ export function PrinterComplaints() {
             </CardContent>
           </Card>
         )}
-        <DashboardStats stats={stats} loading={loading && !stats} />
+        <DashboardStats
+          stats={stats}
+          loading={loading && !stats}
+          rangeLabel={getDateRangeLabel({
+            datePreset: filters.datePreset,
+            customFrom: filters.customFrom,
+            customTo: filters.customTo,
+          })}
+        />
 
         {isDesktop && (
           <Card ref={formRef}>
@@ -260,7 +320,7 @@ export function PrinterComplaints() {
           </Card>
         )}
 
-        <Card className="overflow-hidden shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader className="space-y-4 p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base md:text-lg">Complaint Records</CardTitle>
@@ -270,10 +330,13 @@ export function PrinterComplaints() {
             </div>
             <ComplaintFiltersBar
               filters={filters}
+              exporting={exporting}
               onChange={setFilters}
+              onExportPdf={() => void handleExport("pdf")}
+              onExportExcel={() => void handleExport("excel")}
             />
           </CardHeader>
-          <CardContent className="space-y-4 p-4 pt-0 md:p-6 md:pt-0">
+          <CardContent className="space-y-4 overflow-visible p-4 pt-0 md:p-6 md:pt-0">
             {showEmpty ? (
               <div className="rounded-2xl border border-dashed bg-muted/30 px-5 py-12 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-primary">
