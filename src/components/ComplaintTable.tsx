@@ -73,24 +73,24 @@ export function ComplaintTable({
 
   return (
     <>
-      <div className="hidden lg:block">
-        <div className="w-full overflow-x-auto overscroll-x-contain rounded-lg border [scrollbar-gutter:stable]">
+      <div className="hidden min-w-0 lg:block">
+        <div className="table-scroll">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
               <TableHead>Party Name</TableHead>
               <TableHead>Printer Model</TableHead>
+              <TableHead>Problem</TableHead>
+              <TableHead>Toner</TableHead>
               <TableHead>Serial No</TableHead>
               <TableHead>Phone No</TableHead>
-              <TableHead>Toner</TableHead>
-              <TableHead>Problem</TableHead>
-              <TableHead>Printer Parts</TableHead>
               <TableHead>Est. Cost</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Printer Parts</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Completed At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="table-sticky-actions text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -101,11 +101,10 @@ export function ComplaintTable({
                 </TableCell>
                 <TableCell className="font-medium">{complaint.party_name || "—"}</TableCell>
                 <TableCell>{complaint.printer_name}</TableCell>
+                <TableCell className="max-w-48 truncate">{complaint.problem || "—"}</TableCell>
+                <TableCell>{complaint.toner ? "Yes" : "No"}</TableCell>
                 <TableCell>{complaint.serial_no || "—"}</TableCell>
                 <TableCell>{complaint.phone_no || "—"}</TableCell>
-                <TableCell>{complaint.toner ? "Yes" : "No"}</TableCell>
-                <TableCell className="max-w-48 truncate">{complaint.problem || "—"}</TableCell>
-                <TableCell className="max-w-48 truncate">{complaint.printer_parts || "—"}</TableCell>
                 <TableCell>{formatCost(complaint.estimated_cost)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -130,9 +129,10 @@ export function ComplaintTable({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
+                <TableCell className="max-w-48 truncate">{complaint.printer_parts || "—"}</TableCell>
                 <TableCell>{formatDateTime(complaint.created_at)}</TableCell>
                 <TableCell>{formatDateTime(complaint.completed_at)}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="table-sticky-actions text-right">
                   <div className="flex justify-end gap-1">
                     <Button size="sm" variant="ghost" onClick={() => handlePrint(complaint)}>
                       Print

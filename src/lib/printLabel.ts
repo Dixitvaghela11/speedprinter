@@ -13,6 +13,7 @@ function escapeHtml(value: string) {
 export function printComplaintLabel(complaint: PrinterComplaint) {
   const partyName = escapeHtml(complaint.party_name?.trim() || "N/A")
   const phoneNo = escapeHtml(complaint.phone_no?.trim() || "N/A")
+  const problem = escapeHtml(complaint.problem?.trim() || "N/A")
   const createdDate = escapeHtml(format(new Date(complaint.created_at), "dd/MM/yyyy hh:mm a"))
 
   const printWindow = window.open("", "_blank", "width=400,height=300")
@@ -48,27 +49,39 @@ export function printComplaintLabel(complaint: PrinterComplaint) {
     .label {
       width: 50mm;
       height: 25mm;
-      padding: 1.8mm 2mm;
+      padding: 1.2mm 1.6mm;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 1.4mm;
+      gap: 0.8mm;
     }
     .party {
-      font-size: 12pt;
+      font-size: 10pt;
       font-weight: 800;
-      line-height: 1.1;
+      line-height: 1.05;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .meta {
-      font-size: 10pt;
+      font-size: 8pt;
       font-weight: 700;
-      line-height: 1.15;
+      line-height: 1.1;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .problem {
+      font-size: 8pt;
+      font-weight: 700;
+      line-height: 1.1;
+      max-height: 2.3em;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      white-space: normal;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -76,6 +89,7 @@ export function printComplaintLabel(complaint: PrinterComplaint) {
   <div class="label">
     <div class="party">${partyName}</div>
     <div class="meta">Ph: ${phoneNo}</div>
+    <div class="problem">Pr: ${problem}</div>
     <div class="meta">Date: ${createdDate}</div>
   </div>
   <script>

@@ -320,7 +320,7 @@ export function PrinterComplaints() {
           </Card>
         )}
 
-        <Card className="shadow-sm">
+        <Card className="min-w-0 shadow-sm">
           <CardHeader className="space-y-4 p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base md:text-lg">Complaint Records</CardTitle>

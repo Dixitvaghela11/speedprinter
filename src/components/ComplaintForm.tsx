@@ -234,14 +234,13 @@ export function ComplaintForm({
             <p className="text-xs text-destructive">{errors.printer_name}</p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="serial_no">Serial No</Label>
-          <ComboboxInput
-            id="serial_no"
-            placeholder="Select or type serial number"
-            value={values.serial_no}
-            options={serialOptions}
-            onChange={(serial_no) => setValues((v) => ({ ...v, serial_no }))}
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="problem">Problem</Label>
+          <Textarea
+            id="problem"
+            placeholder="Describe the printer problem..."
+            value={values.problem}
+            onChange={(e) => setValues((v) => ({ ...v, problem: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
@@ -270,6 +269,16 @@ export function ComplaintForm({
               No
             </label>
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="serial_no">Serial No</Label>
+          <ComboboxInput
+            id="serial_no"
+            placeholder="Select or type serial number"
+            value={values.serial_no}
+            options={serialOptions}
+            onChange={(serial_no) => setValues((v) => ({ ...v, serial_no }))}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone_no">Mobile No</Label>
@@ -319,15 +328,6 @@ export function ComplaintForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="problem">Problem</Label>
-          <Textarea
-            id="problem"
-            placeholder="Describe the printer problem..."
-            value={values.problem}
-            onChange={(e) => setValues((v) => ({ ...v, problem: e.target.value }))}
-          />
         </div>
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="printer_parts">Printer Parts</Label>
